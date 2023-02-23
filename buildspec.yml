@@ -1,0 +1,38 @@
+version: 0.2
+ 
+phases:
+  install:
+    runtime-versions:
+      docker: 18
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email)
+      - TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
+      - IMAGE_URI="${REPOSITORY_URI}:${TAG}"
+      - export IMAGE_URI="${IMAGE_URI}"
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...          
+      - docker build --tag "$IMAGE_URI" .
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push "$IMAGE_URI"
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$SERVICE_NAME" "$IMAGE_URI"  > imageDetail.json
+      - echo "${IMAGE_URI}"
+      - echo "${EXECUTION_ROLE_ARN}"
+      - sed -i 's/<APP_NAME>/'$SERVICE_NAME'/g' appspec.yml taskdef.json
+      - sed -i "s/<IMAGE_URI>/$(echo $IMAGE_URI | sed -e 's/\\/\\\\/g; s/\//\\\//g; s/&/\\\&/g')/g" taskdef.json
+      - sed -i "s/<EXECUTION_ROLE_ARN>/$(echo $EXECUTION_ROLE_ARN | sed -e 's/\\/\\\\/g; s/\//\\\//g; s/&/\\\&/g')/g" taskdef.json
+      - echo Verify configuration...
+      - cat taskdef.json
+      - cat imageDetail.json
+      - cat appspec.yml
+artifacts:
+  files: 
+    - imageDetail.json
+    - appspec.yml
+    - taskdef.json

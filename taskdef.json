@@ -1,0 +1,35 @@
+{
+    "executionRoleArn": "<EXECUTION_ROLE_ARN>",
+    "cpu": "256",
+    "memory": "512",
+    "containerDefinitions": [
+      {
+        "name": "<APP_NAME>",
+        "image": "<IMAGE_URI>",
+        "essential": true,
+        "cpu": 0,
+        "portMappings": [
+          {
+            "hostPort": 80,
+            "protocol": "tcp",
+            "containerPort": 80
+          }
+        ],
+        "environment": [
+          {
+            "name": "PORT",
+            "value": "80"
+          },
+          {
+            "name": "APP_NAME",
+            "value": "<APP_NAME>"
+          }
+        ]
+      }
+    ],
+    "requiresCompatibilities": [
+      "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "family": "<APP_NAME>"
+  }
